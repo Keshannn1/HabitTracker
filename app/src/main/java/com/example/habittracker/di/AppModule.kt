@@ -3,6 +3,7 @@ package com.example.habittracker.di
 import android.content.Context
 import com.example.habittracker.data.local.AppDatabase
 import com.example.habittracker.data.local.dao.RoutineDao
+import com.example.habittracker.data.local.dao.TodoDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,5 +25,11 @@ object AppModule {
     @Singleton
     fun provideRoutineDao(database: AppDatabase): RoutineDao {
         return database.routineDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTodoDao(database: AppDatabase): TodoDao {
+        return database.todoDao()
     }
 }

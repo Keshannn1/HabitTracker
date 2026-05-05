@@ -22,6 +22,7 @@ import com.example.habittracker.presentation.RoutineViewModel
 fun ActiveTimerScreen(
     routineId: String,
     onBack: () -> Unit,
+    onRoutineCompleted: (() -> Unit)? = null,
     viewModel: RoutineViewModel = hiltViewModel()
 ) {
     // 1. Keep Screen On logic
@@ -42,6 +43,8 @@ fun ActiveTimerScreen(
 
     LaunchedEffect(uiState.isRoutineComplete) {
         if (uiState.isRoutineComplete) {
+            // Trigger cloud profile update before navigating back
+            onRoutineCompleted?.invoke()
             onBack()
         }
     }
@@ -54,7 +57,7 @@ fun ActiveTimerScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                
+
                 // 2. The Sequential Slide: Animated Task Name
                 AnimatedContent(
                     targetState = uiState.currentTask?.name ?: "Preparing...",
@@ -87,7 +90,7 @@ fun ActiveTimerScreen(
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                    
+
                     val mins = uiState.secondsRemaining / 60
                     val secs = uiState.secondsRemaining % 60
                     val timeString = String.format("%02d:%02d", mins, secs)
@@ -116,7 +119,7 @@ fun ActiveTimerScreen(
                             Icon(Icons.Default.Pause, contentDescription = "Pause", modifier = Modifier.size(36.dp))
                         }
                     }
-                    
+
                     TextButton(onClick = { viewModel.skipTask() }) {
                         Text("Skip")
                     }

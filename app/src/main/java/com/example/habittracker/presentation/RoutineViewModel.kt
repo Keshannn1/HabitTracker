@@ -2,6 +2,8 @@ package com.example.habittracker.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.habittracker.data.local.dao.RoutineDao
+import com.example.habittracker.data.local.entity.HistoryEntity
 import com.example.habittracker.data.local.entity.TaskEntity
 import com.example.habittracker.domain.use_case.CompleteTaskAndAdvanceUseCase
 import com.example.habittracker.domain.use_case.ResetAndStartRoutineUseCase
@@ -25,7 +27,8 @@ data class TimerUiState(
 @HiltViewModel
 class RoutineViewModel @Inject constructor(
     private val resetAndStartRoutineUseCase: ResetAndStartRoutineUseCase,
-    private val completeTaskAndAdvanceUseCase: CompleteTaskAndAdvanceUseCase
+    private val completeTaskAndAdvanceUseCase: CompleteTaskAndAdvanceUseCase,
+    private val routineDao: RoutineDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TimerUiState())
@@ -34,9 +37,11 @@ class RoutineViewModel @Inject constructor(
     private var timerJob: Job? = null
     private var currentRoutineId: String? = null
     private var timeSpentOnCurrentTask: Long = 0L
+    private var totalTimeSpent: Long = 0L
 
     fun startRoutine(routineId: String) {
         currentRoutineId = routineId
+        totalTimeSpent = 0L
         viewModelScope.launch {
             val firstTask = resetAndStartRoutineUseCase(routineId)
             if (firstTask != null) {
@@ -99,6 +104,7 @@ class RoutineViewModel @Inject constructor(
         val rId = currentRoutineId
         
         if (task != null && rId != null) {
+            totalTimeSpent += timeSpentOnCurrentTask
             val nextTask = completeTaskAndAdvanceUseCase(
                 taskId = task.id,
                 routineId = rId,
@@ -110,13 +116,23 @@ class RoutineViewModel @Inject constructor(
                     it.copy(
                         currentTask = nextTask,
                         secondsRemaining = nextTask.seconds,
-                        isPaused = false, // Keep timer running for the next task
+                        isPaused = false,
                         isRoutineComplete = false
                     )
                 }
                 timeSpentOnCurrentTask = 0L
                 startTimerCoroutine()
             } else {
+                // Routine fully complete — record history
+                val routineName = routineDao.getRoutineName(rId) ?: "Unknown Routine"
+                val history = HistoryEntity(
+                    routineId = rId,
+                    routineName = routineName,
+                    completionDate = System.currentTimeMillis(),
+                    totalTimeSpent = totalTimeSpent
+                )
+                routineDao.insertHistory(history)
+
                 _uiState.update {
                     it.copy(
                         currentTask = null,

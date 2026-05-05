@@ -1,7 +1,6 @@
 package com.example.habittracker.domain.use_case
 
 import com.example.habittracker.data.local.dao.RoutineDao
-import com.example.habittracker.data.local.entity.HistoryEntity
 import com.example.habittracker.data.local.entity.TaskEntity
 import com.example.habittracker.data.local.entity.TaskStatus
 import javax.inject.Inject
@@ -9,20 +8,16 @@ import javax.inject.Inject
 class CompleteTaskAndAdvanceUseCase @Inject constructor(
     private val routineDao: RoutineDao
 ) {
+    /**
+     * Completes the current task and returns the next pending task.
+     * Does NOT insert history — that's done when the full routine completes.
+     */
     suspend operator fun invoke(taskId: String, routineId: String, timeSpent: Long): TaskEntity? {
         // Update TaskEntity status to COMPLETED
         val currentTask = routineDao.getTaskById(taskId)
         if (currentTask != null) {
             routineDao.updateTask(currentTask.copy(status = TaskStatus.COMPLETED))
         }
-
-        // Insert a record into HistoryEntity
-        val history = HistoryEntity(
-            routineId = routineId,
-            completionDate = System.currentTimeMillis(),
-            totalTimeSpent = timeSpent
-        )
-        routineDao.insertHistory(history)
 
         // Call routineDao.getNextPendingTask(routineId)
         val nextTask = routineDao.getNextPendingTask(routineId)
@@ -34,7 +29,7 @@ class CompleteTaskAndAdvanceUseCase @Inject constructor(
             return activeTask
         }
 
-        // If null, return a "Routine Finished" signal
+        // If null, routine is fully complete
         return null
     }
 }

@@ -17,7 +17,7 @@ class CloneTemplateUseCase @Inject constructor(
         val newRoutineId = UUID.randomUUID().toString()
         val newRoutine = RoutineEntity(
             id = newRoutineId,
-            title = templateWithTasks.routine.title,
+            title = "${templateWithTasks.routine.title} (Copy)",
             isTemplate = false
         )
         

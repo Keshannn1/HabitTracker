@@ -8,6 +8,7 @@ import java.util.UUID
 data class HistoryEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val routineId: String,
+    val routineName: String,
     val completionDate: Long,
     val totalTimeSpent: Long
 )
