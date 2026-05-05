@@ -1,0 +1,136 @@
+package com.example.habittracker.presentation
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.habittracker.data.local.entity.TaskEntity
+import com.example.habittracker.domain.use_case.CompleteTaskAndAdvanceUseCase
+import com.example.habittracker.domain.use_case.ResetAndStartRoutineUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+data class TimerUiState(
+    val currentTask: TaskEntity? = null,
+    val secondsRemaining: Long = 0L,
+    val isPaused: Boolean = true,
+    val isRoutineComplete: Boolean = false
+)
+
+@HiltViewModel
+class RoutineViewModel @Inject constructor(
+    private val resetAndStartRoutineUseCase: ResetAndStartRoutineUseCase,
+    private val completeTaskAndAdvanceUseCase: CompleteTaskAndAdvanceUseCase
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(TimerUiState())
+    val uiState: StateFlow<TimerUiState> = _uiState.asStateFlow()
+
+    private var timerJob: Job? = null
+    private var currentRoutineId: String? = null
+    private var timeSpentOnCurrentTask: Long = 0L
+
+    fun startRoutine(routineId: String) {
+        currentRoutineId = routineId
+        viewModelScope.launch {
+            val firstTask = resetAndStartRoutineUseCase(routineId)
+            if (firstTask != null) {
+                _uiState.update { 
+                    it.copy(
+                        currentTask = firstTask,
+                        secondsRemaining = firstTask.seconds,
+                        isPaused = true,
+                        isRoutineComplete = false
+                    )
+                }
+                timeSpentOnCurrentTask = 0L
+            } else {
+                _uiState.update { it.copy(isRoutineComplete = true) }
+            }
+        }
+    }
+
+    fun toggleTimer() {
+        val currentState = _uiState.value
+        if (currentState.isRoutineComplete || currentState.currentTask == null) return
+
+        if (currentState.isPaused) {
+            // Start timer
+            _uiState.update { it.copy(isPaused = false) }
+            startTimerCoroutine()
+        } else {
+            // Pause timer
+            _uiState.update { it.copy(isPaused = true) }
+            timerJob?.cancel()
+        }
+    }
+
+    private fun startTimerCoroutine() {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            while (_uiState.value.secondsRemaining > 0 && !_uiState.value.isPaused) {
+                delay(1000L)
+                timeSpentOnCurrentTask++
+                _uiState.update { it.copy(secondsRemaining = it.secondsRemaining - 1) }
+                
+                if (_uiState.value.secondsRemaining <= 0L) {
+                    advanceToNextTask()
+                    break
+                }
+            }
+        }
+    }
+
+    fun skipTask() {
+        viewModelScope.launch {
+            timerJob?.cancel()
+            advanceToNextTask()
+        }
+    }
+
+    private suspend fun advanceToNextTask() {
+        val currentState = _uiState.value
+        val task = currentState.currentTask
+        val rId = currentRoutineId
+        
+        if (task != null && rId != null) {
+            val nextTask = completeTaskAndAdvanceUseCase(
+                taskId = task.id,
+                routineId = rId,
+                timeSpent = timeSpentOnCurrentTask
+            )
+
+            if (nextTask != null) {
+                _uiState.update {
+                    it.copy(
+                        currentTask = nextTask,
+                        secondsRemaining = nextTask.seconds,
+                        isPaused = false, // Keep timer running for the next task
+                        isRoutineComplete = false
+                    )
+                }
+                timeSpentOnCurrentTask = 0L
+                startTimerCoroutine()
+            } else {
+                _uiState.update {
+                    it.copy(
+                        currentTask = null,
+                        secondsRemaining = 0L,
+                        isPaused = true,
+                        isRoutineComplete = true
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        timerJob?.cancel()
+    }
+}

@@ -1,0 +1,12 @@
+# Task Plan
+- [x] Protocol 0: Initialization
+- [x] Phase 1: Blueprint (Schema defined)
+- [ ] Phase 2: Link (Room & Coroutines Setup)
+- [ ] Phase 3: Architect (ACTIVE)
+  - [x] Room setup SOP
+  - [x] Timer logic SOP
+  - [x] Entity creation
+  - [/] DAOs and Database
+  - [ ] RoutineViewModel
+- [/] Phase 4: Stylize (IN PROGRESS)
+- [ ] Phase 5: Trigger
