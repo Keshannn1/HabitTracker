@@ -41,10 +41,16 @@ fun ActiveTimerScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
+    // Track if we've already navigated to prevent double-navigation crashes
+    var hasNavigatedBack by remember { mutableStateOf(false) }
+
     LaunchedEffect(uiState.isRoutineComplete) {
-        if (uiState.isRoutineComplete) {
-            // Trigger cloud profile update before navigating back
+        if (uiState.isRoutineComplete && !hasNavigatedBack) {
+            hasNavigatedBack = true
+            // Trigger cloud profile update in a separate coroutine
             onRoutineCompleted?.invoke()
+            // Small delay to allow state to settle before navigating back
+            kotlinx.coroutines.delay(200L)
             onBack()
         }
     }

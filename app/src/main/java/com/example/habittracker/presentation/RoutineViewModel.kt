@@ -43,18 +43,23 @@ class RoutineViewModel @Inject constructor(
         currentRoutineId = routineId
         totalTimeSpent = 0L
         viewModelScope.launch {
-            val firstTask = resetAndStartRoutineUseCase(routineId)
-            if (firstTask != null) {
-                _uiState.update { 
-                    it.copy(
-                        currentTask = firstTask,
-                        secondsRemaining = firstTask.seconds,
-                        isPaused = true,
-                        isRoutineComplete = false
-                    )
+            try {
+                val firstTask = resetAndStartRoutineUseCase(routineId)
+                if (firstTask != null) {
+                    _uiState.update { 
+                        it.copy(
+                            currentTask = firstTask,
+                            secondsRemaining = firstTask.seconds,
+                            isPaused = true,
+                            isRoutineComplete = false
+                        )
+                    }
+                    timeSpentOnCurrentTask = 0L
+                } else {
+                    _uiState.update { it.copy(isRoutineComplete = true) }
                 }
-                timeSpentOnCurrentTask = 0L
-            } else {
+            } catch (e: Exception) {
+                // If start fails, mark as complete so the screen navigates back
                 _uiState.update { it.copy(isRoutineComplete = true) }
             }
         }
@@ -65,11 +70,9 @@ class RoutineViewModel @Inject constructor(
         if (currentState.isRoutineComplete || currentState.currentTask == null) return
 
         if (currentState.isPaused) {
-            // Start timer
             _uiState.update { it.copy(isPaused = false) }
             startTimerCoroutine()
         } else {
-            // Pause timer
             _uiState.update { it.copy(isPaused = true) }
             timerJob?.cancel()
         }
@@ -104,35 +107,47 @@ class RoutineViewModel @Inject constructor(
         val rId = currentRoutineId
         
         if (task != null && rId != null) {
-            totalTimeSpent += timeSpentOnCurrentTask
-            val nextTask = completeTaskAndAdvanceUseCase(
-                taskId = task.id,
-                routineId = rId,
-                timeSpent = timeSpentOnCurrentTask
-            )
-
-            if (nextTask != null) {
-                _uiState.update {
-                    it.copy(
-                        currentTask = nextTask,
-                        secondsRemaining = nextTask.seconds,
-                        isPaused = false,
-                        isRoutineComplete = false
-                    )
-                }
-                timeSpentOnCurrentTask = 0L
-                startTimerCoroutine()
-            } else {
-                // Routine fully complete — record history
-                val routineName = routineDao.getRoutineName(rId) ?: "Unknown Routine"
-                val history = HistoryEntity(
+            try {
+                totalTimeSpent += timeSpentOnCurrentTask
+                val nextTask = completeTaskAndAdvanceUseCase(
+                    taskId = task.id,
                     routineId = rId,
-                    routineName = routineName,
-                    completionDate = System.currentTimeMillis(),
-                    totalTimeSpent = totalTimeSpent
+                    timeSpent = timeSpentOnCurrentTask
                 )
-                routineDao.insertHistory(history)
 
+                if (nextTask != null) {
+                    _uiState.update {
+                        it.copy(
+                            currentTask = nextTask,
+                            secondsRemaining = nextTask.seconds,
+                            isPaused = false,
+                            isRoutineComplete = false
+                        )
+                    }
+                    timeSpentOnCurrentTask = 0L
+                    startTimerCoroutine()
+                } else {
+                    // Routine fully complete — record history
+                    val routineName = routineDao.getRoutineName(rId) ?: "Unknown Routine"
+                    val history = HistoryEntity(
+                        routineId = rId,
+                        routineName = routineName,
+                        completionDate = System.currentTimeMillis(),
+                        totalTimeSpent = totalTimeSpent
+                    )
+                    routineDao.insertHistory(history)
+
+                    _uiState.update {
+                        it.copy(
+                            currentTask = null,
+                            secondsRemaining = 0L,
+                            isPaused = true,
+                            isRoutineComplete = true
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // If anything goes wrong, mark routine as complete so screen navigates back
                 _uiState.update {
                     it.copy(
                         currentTask = null,

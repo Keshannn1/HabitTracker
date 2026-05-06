@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -48,6 +49,7 @@ fun DashboardScreen(
     onUseTemplate: () -> Unit = {},
     onAnalytics: () -> Unit = {},
     onNavigateToTodos: () -> Unit = {},
+    onProfile: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     todoViewModel: TodoViewModel = hiltViewModel()
 ) {
@@ -138,7 +140,18 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Routines") },
+                title = {
+                    Text(
+                        text = buildString {
+                            val displayName = uiState.userProfile?.displayName?.ifBlank { null }
+                            if (displayName != null) {
+                                append("$displayName's Routines")
+                            } else {
+                                append("My Routines")
+                            }
+                        }
+                    )
+                },
                 actions = {
                     IconButton(onClick = onNavigateToTodos) {
                         Icon(
@@ -151,6 +164,13 @@ fun DashboardScreen(
                         Icon(
                             Icons.Default.BarChart,
                             contentDescription = "Full Analytics",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(onClick = onProfile) {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = "Profile",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

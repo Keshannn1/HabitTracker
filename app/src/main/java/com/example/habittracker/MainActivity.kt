@@ -30,6 +30,7 @@ import com.example.habittracker.ui.auth.AuthScreen
 import com.example.habittracker.ui.dashboard.DashboardScreen
 import com.example.habittracker.ui.dashboard.RoutineDetailScreen
 import com.example.habittracker.ui.dashboard.TemplateSelectionScreen
+import com.example.habittracker.ui.profile.ProfileScreen
 import com.example.habittracker.ui.theme.HabitTrackerTheme
 import com.example.habittracker.ui.timer.ActiveTimerScreen
 import com.example.habittracker.ui.todo.TodoDetailScreen
@@ -43,6 +44,7 @@ object Routes {
     const val CREATE_ROUTINE = "create_routine"
     const val EDIT_ROUTINE = "edit_routine/{routineId}"
     const val ANALYTICS = "analytics"
+    const val PROFILE = "profile"
     const val TEMPLATE_SELECTION = "template_selection"
     const val LOADING = "loading"
     const val TODO_LIST = "todo_list"
@@ -73,7 +75,6 @@ fun HabitTrackerNavGraph() {
     val todoViewModel: TodoViewModel = hiltViewModel()
     val authState by authViewModel.authState.collectAsState()
 
-    // Reactively navigate based on auth state changes
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Authenticated -> {
@@ -140,6 +141,9 @@ fun HabitTrackerNavGraph() {
                 },
                 onNavigateToTodos = {
                     navController.navigate(Routes.TODO_LIST)
+                },
+                onProfile = {
+                    navController.navigate(Routes.PROFILE)
                 }
             )
         }
@@ -182,6 +186,15 @@ fun HabitTrackerNavGraph() {
 
         composable(Routes.ANALYTICS) {
             AnalyticsScreen(
+                onBack = { navController.popBackStack() },
+                onProfile = {
+                    navController.navigate(Routes.PROFILE)
+                }
+            )
+        }
+
+        composable(Routes.PROFILE) {
+            ProfileScreen(
                 onBack = { navController.popBackStack() }
             )
         }
@@ -207,9 +220,7 @@ fun HabitTrackerNavGraph() {
             val todoViewModel: TodoViewModel = hiltViewModel()
             TodoListScreen(
                 onBack = { navController.popBackStack() },
-                onCreateTodo = {
-                    // Dialog is handled inside TodoListScreen
-                },
+                onCreateTodo = { },
                 onEditTodo = { todoId ->
                     navController.navigate(Routes.todoDetail(todoId))
                 }
@@ -255,7 +266,8 @@ fun DashboardPreview() {
             onStartRoutine = {},
             onCreateRoutine = {},
             onEditRoutine = {},
-            onNavigateToTodos = {}
+            onNavigateToTodos = {},
+            onProfile = {}
         )
     }
 }

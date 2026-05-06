@@ -5,23 +5,36 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.habittracker.data.local.dao.CategoryDao
+import com.example.habittracker.data.local.dao.MoodDao
+import com.example.habittracker.data.local.dao.NoteDao
 import com.example.habittracker.data.local.dao.RoutineDao
 import com.example.habittracker.data.local.dao.TodoDao
+import com.example.habittracker.data.local.entity.CategoryEntity
 import com.example.habittracker.data.local.entity.HistoryEntity
+import com.example.habittracker.data.local.entity.MoodEntity
+import com.example.habittracker.data.local.entity.NoteEntity
 import com.example.habittracker.data.local.entity.RoutineEntity
 import com.example.habittracker.data.local.entity.TaskEntity
 import com.example.habittracker.data.local.entity.TodoEntity
 import java.util.UUID
 
 @Database(
-    entities = [RoutineEntity::class, TaskEntity::class, HistoryEntity::class, TodoEntity::class],
-    version = 4,
+    entities = [
+        RoutineEntity::class, TaskEntity::class, HistoryEntity::class,
+        TodoEntity::class, MoodEntity::class, NoteEntity::class,
+        CategoryEntity::class
+    ],
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun routineDao(): RoutineDao
     abstract fun todoDao(): TodoDao
+    abstract fun moodDao(): MoodDao
+    abstract fun noteDao(): NoteDao
+    abstract fun categoryDao(): CategoryDao
 
     companion object {
         @Volatile
@@ -46,15 +59,11 @@ abstract class AppDatabase : RoomDatabase() {
     private class SeedingCallback : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
-            // Seed templates using raw SQL since the Room DAO is not available yet
-            // (INSTANCE is only set after build() completes)
             seedTemplatesDirect(db)
         }
 
         override fun onOpen(db: SupportSQLiteDatabase) {
             super.onOpen(db)
-            // For existing databases that were created before the seeding logic was added,
-            // seed templates if they haven't been seeded yet
             val cursor = db.query("SELECT COUNT(*) FROM routines WHERE isTemplate = 1")
             cursor.use {
                 if (it.moveToFirst() && it.getInt(0) == 0) {
