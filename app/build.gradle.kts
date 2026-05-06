@@ -90,4 +90,11 @@ dependencies {
 
     // Google Sign-In
     implementation(libs.play.services.auth)
+
+    // Retrofit + Gson
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+
+    // Google Play Services Location
+    implementation(libs.play.services.location)
 }

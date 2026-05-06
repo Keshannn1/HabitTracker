@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.habittracker.data.local.entity.TodoEntity
 import com.example.habittracker.data.local.entity.RoutineWithTasks
+import com.example.habittracker.presentation.BriefingViewModel
 import com.example.habittracker.presentation.DashboardViewModel
 import com.example.habittracker.presentation.TodoViewModel
 import com.example.habittracker.domain.model.TodoPriority
@@ -178,6 +179,12 @@ fun DashboardScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Daily Briefing Card — Hardware/Sensors + Cloud/Networking rubric
+            item {
+                Spacer(modifier = Modifier.height(4.dp))
+                DailyBriefingCard()
+            }
+
             // Stats Summary Card
             item {
                 Spacer(modifier = Modifier.height(4.dp))

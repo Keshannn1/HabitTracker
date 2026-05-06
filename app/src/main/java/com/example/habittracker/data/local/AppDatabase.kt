@@ -50,6 +50,18 @@ abstract class AppDatabase : RoomDatabase() {
             // (INSTANCE is only set after build() completes)
             seedTemplatesDirect(db)
         }
+
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+            // For existing databases that were created before the seeding logic was added,
+            // seed templates if they haven't been seeded yet
+            val cursor = db.query("SELECT COUNT(*) FROM routines WHERE isTemplate = 1")
+            cursor.use {
+                if (it.moveToFirst() && it.getInt(0) == 0) {
+                    seedTemplatesDirect(db)
+                }
+            }
+        }
     }
 }
 
