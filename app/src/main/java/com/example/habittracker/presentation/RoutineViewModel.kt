@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.habittracker.data.local.dao.RoutineDao
 import com.example.habittracker.data.local.entity.HistoryEntity
 import com.example.habittracker.data.local.entity.TaskEntity
+import com.example.habittracker.data.remote.FirebaseRoutineRepository
 import com.example.habittracker.domain.use_case.CompleteTaskAndAdvanceUseCase
 import com.example.habittracker.domain.use_case.ResetAndStartRoutineUseCase
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -28,7 +30,9 @@ data class TimerUiState(
 class RoutineViewModel @Inject constructor(
     private val resetAndStartRoutineUseCase: ResetAndStartRoutineUseCase,
     private val completeTaskAndAdvanceUseCase: CompleteTaskAndAdvanceUseCase,
-    private val routineDao: RoutineDao
+    private val routineDao: RoutineDao,
+    private val firebaseRoutineRepository: FirebaseRoutineRepository,
+    private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TimerUiState())
@@ -136,6 +140,9 @@ class RoutineViewModel @Inject constructor(
                         totalTimeSpent = totalTimeSpent
                     )
                     routineDao.insertHistory(history)
+                    firebaseAuth.currentUser?.uid?.let { userId ->
+                        firebaseRoutineRepository.addHistory(userId, history)
+                    }
 
                     _uiState.update {
                         it.copy(

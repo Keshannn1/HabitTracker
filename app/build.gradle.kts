@@ -97,4 +97,7 @@ dependencies {
 
     // Google Play Services Location
     implementation(libs.play.services.location)
+
+    // Coil for image loading
+    implementation(libs.coil.compose)
 }

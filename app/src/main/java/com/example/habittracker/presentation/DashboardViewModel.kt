@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.habittracker.data.local.dao.RoutineDao
 import com.example.habittracker.data.local.entity.HistoryEntity
 import com.example.habittracker.data.local.entity.RoutineWithTasks
+import com.example.habittracker.data.remote.FirebaseRoutineRepository
 import com.example.habittracker.domain.model.AuthState
 import com.example.habittracker.domain.model.UserProfile
 import com.example.habittracker.domain.repository.AuthRepository
@@ -33,7 +34,8 @@ data class DashboardUiState(
 class DashboardViewModel @Inject constructor(
     private val routineDao: RoutineDao,
     private val authRepository: AuthRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val firebaseRoutineRepository: FirebaseRoutineRepository
 ) : ViewModel() {
 
     val authState: StateFlow<AuthState> = authRepository.authState
@@ -207,6 +209,10 @@ class DashboardViewModel @Inject constructor(
     fun deleteRoutine(routineWithTasks: RoutineWithTasks) {
         viewModelScope.launch {
             routineDao.deleteRoutine(routineWithTasks.routine)
+            val currentAuth = authState.value
+            if (currentAuth is AuthState.Authenticated) {
+                firebaseRoutineRepository.deleteRoutine(currentAuth.userId, routineWithTasks.routine.id)
+            }
         }
     }
 

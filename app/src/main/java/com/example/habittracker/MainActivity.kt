@@ -31,7 +31,7 @@ import com.example.habittracker.ui.dashboard.DashboardScreen
 import com.example.habittracker.ui.dashboard.RoutineDetailScreen
 import com.example.habittracker.ui.dashboard.TemplateSelectionScreen
 import com.example.habittracker.ui.profile.ProfileScreen
-import com.example.habittracker.ui.theme.HabitTrackerTheme
+import com.example.habittracker.ui.theme.AppTheme
 import com.example.habittracker.ui.timer.ActiveTimerScreen
 import com.example.habittracker.ui.todo.TodoDetailScreen
 import com.example.habittracker.ui.todo.TodoListScreen
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            HabitTrackerTheme {
+            AppTheme {
                 HabitTrackerNavGraph()
             }
         }
@@ -272,7 +272,7 @@ fun HabitTrackerNavGraph() {
 @Preview(showBackground = true)
 @Composable
 fun DashboardPreview() {
-    HabitTrackerTheme {
+    AppTheme {
         DashboardScreen(
             onStartRoutine = {},
             onCreateRoutine = {},

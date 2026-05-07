@@ -19,6 +19,7 @@ interface RoutineDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRoutine(routine: RoutineEntity): Long
 
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTasks(tasks: List<TaskEntity>): List<Long>
 
@@ -46,6 +47,7 @@ interface RoutineDao {
     @Query("DELETE FROM tasks WHERE routineId = :routineId")
     suspend fun deleteTasksByRoutineId(routineId: String): Int
 
+
     // Using orderIndex to fetch the next sequential task
     @Query("SELECT * FROM tasks WHERE routineId = :routineId AND status = 'PENDING' ORDER BY orderIndex ASC LIMIT 1")
     suspend fun getNextPendingTask(routineId: String): TaskEntity?
@@ -59,6 +61,7 @@ interface RoutineDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHistory(history: HistoryEntity): Long
 
+
     @Query("SELECT title FROM routines WHERE id = :routineId")
     suspend fun getRoutineName(routineId: String): String?
 
@@ -67,4 +70,5 @@ interface RoutineDao {
 
     @Query("SELECT * FROM history ORDER BY completionDate DESC")
     fun getAllHistory(): Flow<List<HistoryEntity>>
+
 }
