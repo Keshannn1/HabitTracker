@@ -43,14 +43,20 @@ class RoutineViewModel @Inject constructor(
     private var timeSpentOnCurrentTask: Long = 0L
     private var totalTimeSpent: Long = 0L
 
+    // Guard to prevent concurrent advanceToNextTask calls (race condition fix)
+    private var isAdvancing = false
+
     fun startRoutine(routineId: String) {
+        timerJob?.cancel()
         currentRoutineId = routineId
         totalTimeSpent = 0L
+        timeSpentOnCurrentTask = 0L
+        isAdvancing = false
         viewModelScope.launch {
             try {
                 val firstTask = resetAndStartRoutineUseCase(routineId)
                 if (firstTask != null) {
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
                             currentTask = firstTask,
                             secondsRemaining = firstTask.seconds,
@@ -63,7 +69,6 @@ class RoutineViewModel @Inject constructor(
                     _uiState.update { it.copy(isRoutineComplete = true) }
                 }
             } catch (e: Exception) {
-                // If start fails, mark as complete so the screen navigates back
                 _uiState.update { it.copy(isRoutineComplete = true) }
             }
         }
@@ -85,11 +90,11 @@ class RoutineViewModel @Inject constructor(
     private fun startTimerCoroutine() {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            while (_uiState.value.secondsRemaining > 0 && !_uiState.value.isPaused) {
+            while (_uiState.value.secondsRemaining > 0 && !_uiState.value.isPaused && !isAdvancing) {
                 delay(1000L)
                 timeSpentOnCurrentTask++
                 _uiState.update { it.copy(secondsRemaining = it.secondsRemaining - 1) }
-                
+
                 if (_uiState.value.secondsRemaining <= 0L) {
                     advanceToNextTask()
                     break
@@ -99,6 +104,7 @@ class RoutineViewModel @Inject constructor(
     }
 
     fun skipTask() {
+        if (isAdvancing) return
         viewModelScope.launch {
             timerJob?.cancel()
             advanceToNextTask()
@@ -106,44 +112,59 @@ class RoutineViewModel @Inject constructor(
     }
 
     private suspend fun advanceToNextTask() {
-        val currentState = _uiState.value
-        val task = currentState.currentTask
-        val rId = currentRoutineId
-        
-        if (task != null && rId != null) {
-            try {
-                totalTimeSpent += timeSpentOnCurrentTask
-                val nextTask = completeTaskAndAdvanceUseCase(
-                    taskId = task.id,
-                    routineId = rId,
-                    timeSpent = timeSpentOnCurrentTask
-                )
+        // Guard: prevent concurrent execution (timer can fire while already advancing)
+        if (isAdvancing) return
+        isAdvancing = true
+        try {
+            val task = _uiState.value.currentTask
+            val rId = currentRoutineId
 
-                if (nextTask != null) {
-                    _uiState.update {
-                        it.copy(
-                            currentTask = nextTask,
-                            secondsRemaining = nextTask.seconds,
-                            isPaused = false,
-                            isRoutineComplete = false
-                        )
-                    }
-                    timeSpentOnCurrentTask = 0L
-                    startTimerCoroutine()
-                } else {
-                    // Routine fully complete — record history
-                    val routineName = routineDao.getRoutineName(rId) ?: "Unknown Routine"
-                    val history = HistoryEntity(
+            if (task != null && rId != null) {
+                try {
+                    totalTimeSpent += timeSpentOnCurrentTask
+                    val nextTask = completeTaskAndAdvanceUseCase(
+                        taskId = task.id,
                         routineId = rId,
-                        routineName = routineName,
-                        completionDate = System.currentTimeMillis(),
-                        totalTimeSpent = totalTimeSpent
+                        timeSpent = timeSpentOnCurrentTask
                     )
-                    routineDao.insertHistory(history)
-                    firebaseAuth.currentUser?.uid?.let { userId ->
-                        firebaseRoutineRepository.addHistory(userId, history)
-                    }
 
+                    if (nextTask != null) {
+                        _uiState.update {
+                            it.copy(
+                                currentTask = nextTask,
+                                secondsRemaining = nextTask.seconds,
+                                isPaused = false,
+                                isRoutineComplete = false
+                            )
+                        }
+                        timeSpentOnCurrentTask = 0L
+                        isAdvancing = false
+                        startTimerCoroutine()
+                        return
+                    } else {
+                        // Routine fully complete
+                        val routineName = routineDao.getRoutineName(rId) ?: "Unknown Routine"
+                        val history = HistoryEntity(
+                            routineId = rId,
+                            routineName = routineName,
+                            completionDate = System.currentTimeMillis(),
+                            totalTimeSpent = totalTimeSpent
+                        )
+                        routineDao.insertHistory(history)
+                        firebaseAuth.currentUser?.uid?.let { userId ->
+                            firebaseRoutineRepository.addHistory(userId, history)
+                        }
+
+                        _uiState.update {
+                            it.copy(
+                                currentTask = null,
+                                secondsRemaining = 0L,
+                                isPaused = true,
+                                isRoutineComplete = true
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
                     _uiState.update {
                         it.copy(
                             currentTask = null,
@@ -153,17 +174,9 @@ class RoutineViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
-                // If anything goes wrong, mark routine as complete so screen navigates back
-                _uiState.update {
-                    it.copy(
-                        currentTask = null,
-                        secondsRemaining = 0L,
-                        isPaused = true,
-                        isRoutineComplete = true
-                    )
-                }
             }
+        } finally {
+            isAdvancing = false
         }
     }
 

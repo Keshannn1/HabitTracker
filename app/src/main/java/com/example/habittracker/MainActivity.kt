@@ -12,8 +12,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import android.util.Log
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -68,6 +71,35 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Safe navigation helper: guards against IllegalStateException from
+ * overlapping navigation actions, which is the #1 crash cause.
+ */
+private fun safeNavigate(
+    navController: androidx.navigation.NavController,
+    route: String,
+    popUpToRoute: String? = null,
+    inclusive: Boolean = false
+) {
+    try {
+        if (popUpToRoute != null) {
+            navController.navigate(route) {
+                popUpTo(popUpToRoute) { this.inclusive = inclusive }
+                launchSingleTop = true
+            }
+        } else {
+            navController.navigate(route) {
+                launchSingleTop = true
+            }
+        }
+    } catch (e: IllegalArgumentException) {
+        // Navigation already in progress or back stack altered - safe to ignore
+        android.util.Log.w("Navigation", "Safe navigation failed: ${e.message}")
+    } catch (e: IllegalStateException) {
+        android.util.Log.w("Navigation", "Safe navigation failed: ${e.message}")
+    }
+}
+
 @Composable
 fun HabitTrackerNavGraph() {
     val navController = rememberNavController()
@@ -75,28 +107,24 @@ fun HabitTrackerNavGraph() {
     val dashboardViewModel: DashboardViewModel = hiltViewModel()
     val authState by authViewModel.authState.collectAsState()
 
+    // Use a flag to prevent overlapping navigation actions
+    val lastNavRequest = remember { mutableStateOf<AuthState?>(null) }
+
     LaunchedEffect(authState) {
-        when (authState) {
-            is AuthState.Authenticated -> {
-                if (navController.currentDestination?.route != Routes.DASHBOARD) {
-                    navController.navigate(Routes.DASHBOARD) {
-                        popUpTo(Routes.LOADING) { inclusive = true }
-                    }
-                }
+        // Skip if already processing this exact state
+        if (lastNavRequest.value === authState) return@LaunchedEffect
+        lastNavRequest.value = authState
+
+        val currentRoute = navController.currentDestination?.route
+        when {
+            authState is AuthState.Authenticated && currentRoute != Routes.DASHBOARD -> {
+                safeNavigate(navController, Routes.DASHBOARD, Routes.LOADING, true)
             }
-            is AuthState.Unauthenticated, is AuthState.Error -> {
-                if (navController.currentDestination?.route != Routes.AUTH) {
-                    navController.navigate(Routes.AUTH) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+            (authState is AuthState.Unauthenticated || authState is AuthState.Error) && currentRoute != Routes.AUTH -> {
+                safeNavigate(navController, Routes.AUTH, Routes.LOADING, true)
             }
-            is AuthState.Loading -> {
-                if (navController.currentDestination?.route != Routes.LOADING) {
-                    navController.navigate(Routes.LOADING) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+            authState is AuthState.Loading && currentRoute != Routes.LOADING -> {
+                safeNavigate(navController, Routes.LOADING, Routes.DASHBOARD, true)
             }
         }
     }

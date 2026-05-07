@@ -74,6 +74,32 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    // Ensure profile observer is always closed before creating a new one
+    private fun loadProfile(userId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isProfileLoading = true)
+
+            // Get initial profile
+            profileRepository.getProfile(userId).onSuccess { profile ->
+                _uiState.value = _uiState.value.copy(
+                    userProfile = profile,
+                    isProfileLoading = false
+                )
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isProfileLoading = false)
+            }
+
+            // Observe real-time profile updates — close previous first
+            profileObserver?.close()
+            profileObserver = profileRepository.observeProfile(userId) { updatedProfile ->
+                _uiState.value = _uiState.value.copy(
+                    userProfile = updatedProfile,
+                    isProfileLoading = false
+                )
+            }
+        }
+    }
+
     private fun computeInlineAnalytics(historyList: List<HistoryEntity>) {
         if (historyList.isEmpty()) {
             _uiState.value = _uiState.value.copy(
@@ -169,29 +195,6 @@ class DashboardViewModel @Inject constructor(
             "${hours}h ${minutes}m"
         } else {
             "${minutes}m"
-        }
-    }
-
-    private fun loadProfile(userId: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isProfileLoading = true)
-
-            // Get initial profile
-            profileRepository.getProfile(userId).onSuccess { profile ->
-                _uiState.value = _uiState.value.copy(
-                    userProfile = profile,
-                    isProfileLoading = false
-                )
-            }
-
-            // Observe real-time profile updates
-            profileObserver?.close()
-            profileObserver = profileRepository.observeProfile(userId) { updatedProfile ->
-                _uiState.value = _uiState.value.copy(
-                    userProfile = updatedProfile,
-                    isProfileLoading = false
-                )
-            }
         }
     }
 
