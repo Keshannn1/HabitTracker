@@ -20,7 +20,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.habittracker.data.local.entity.TodoEntity
 import com.example.habittracker.domain.model.AuthState
 import com.example.habittracker.presentation.AuthViewModel
 import com.example.habittracker.presentation.DashboardViewModel
@@ -74,7 +73,6 @@ fun HabitTrackerNavGraph() {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = hiltViewModel()
     val dashboardViewModel: DashboardViewModel = hiltViewModel()
-    val todoViewModel: TodoViewModel = hiltViewModel()
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -246,7 +244,8 @@ fun HabitTrackerNavGraph() {
             )
         ) { backStackEntry ->
             val todoId = backStackEntry.arguments?.getString("todoId") ?: return@composable
-            val todoState by todoViewModel.allTodos.collectAsState()
+            val todoDetailViewModel: TodoViewModel = hiltViewModel()
+            val todoState by todoDetailViewModel.allTodos.collectAsState()
             val todo = todoState.find { it.id == todoId }
 
             if (todo != null) {
@@ -254,10 +253,10 @@ fun HabitTrackerNavGraph() {
                     todo = todo,
                     onBack = { navController.popBackStack() },
                     onSave = { updatedTodo ->
-                        todoViewModel.updateTodoFull(updatedTodo)
+                        todoDetailViewModel.updateTodoFull(updatedTodo)
                     },
                     onDelete = { deletedTodo ->
-                        todoViewModel.deleteTodo(deletedTodo)
+                        todoDetailViewModel.deleteTodo(deletedTodo)
                         navController.popBackStack()
                     }
                 )

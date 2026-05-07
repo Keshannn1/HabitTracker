@@ -18,7 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Refresh
@@ -29,7 +29,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -57,9 +56,11 @@ fun AiGeneratorScreen(
     var goalText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
 
-    // Navigate back automatically after a successful save
-    LaunchedEffect(uiState) {
-        if (uiState is AiGenerationState.Saved) {
+    // Navigate back once after a successful save (not on every emission)
+    val hasNavigated = remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (uiState is AiGenerationState.Saved && !hasNavigated.value) {
+            hasNavigated.value = true
             onNavigateUp()
         }
     }
@@ -84,7 +85,10 @@ fun AiGeneratorScreen(
                         viewModel.resetState()
                         onNavigateUp()
                     }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Navigate up")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Navigate up"
+                        )
                     }
                 }
             )
@@ -104,7 +108,7 @@ fun AiGeneratorScreen(
                 value = goalText,
                 onValueChange = { goalText = it },
                 label = { Text("Describe your goal") },
-                placeholder = { Text("e.g. ADHD Morning Focus, Evening Wind-Down…") },
+                placeholder = { Text("e.g. ADHD Morning Focus, Evening Wind-Down\u2026") },
                 isError = uiState is AiGenerationState.Error,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -141,7 +145,7 @@ fun AiGeneratorScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("Generating…")
+                    Text("Generating\u2026")
                 } else {
                     Icon(Icons.Filled.AutoAwesome, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -220,7 +224,7 @@ private fun ThinkingAnimation() {
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                "Crafting your routine…",
+                "Crafting your routine\u2026",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -267,7 +271,7 @@ private fun AiGeneratedRoutinePreview(
     onSave: () -> Unit,
     onRegenerate: () -> Unit
 ) {
-    val totalSeconds = tasks.sumOf { it.seconds }
+    val totalSeconds = tasks.fold(0L) { acc, task -> acc + task.seconds }
     val mins = totalSeconds / 60
 
     Column(
@@ -287,7 +291,7 @@ private fun AiGeneratedRoutinePreview(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${tasks.size} tasks · ${mins} min total",
+                    text = "${tasks.size} tasks \u00B7 $mins min total",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
