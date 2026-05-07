@@ -27,6 +27,7 @@ import com.example.habittracker.presentation.DashboardViewModel
 import com.example.habittracker.presentation.TodoViewModel
 import com.example.habittracker.ui.analytics.AnalyticsScreen
 import com.example.habittracker.ui.auth.AuthScreen
+import com.example.habittracker.ui.ai.AiGeneratorScreen
 import com.example.habittracker.ui.dashboard.DashboardScreen
 import com.example.habittracker.ui.dashboard.RoutineDetailScreen
 import com.example.habittracker.ui.dashboard.TemplateSelectionScreen
@@ -49,6 +50,7 @@ object Routes {
     const val LOADING = "loading"
     const val TODO_LIST = "todo_list"
     const val TODO_DETAIL = "todo_detail/{todoId}"
+    const val AI_GENERATOR = "ai_generator"
     fun activeTimer(routineId: String) = "active_timer/$routineId"
     fun editRoutine(routineId: String) = "edit_routine/$routineId"
     fun todoDetail(todoId: String) = "todo_detail/$todoId"
@@ -144,6 +146,9 @@ fun HabitTrackerNavGraph() {
                 },
                 onProfile = {
                     navController.navigate(Routes.PROFILE)
+                },
+                onNavigateToAiGenerator = {
+                    navController.navigate(Routes.AI_GENERATOR)
                 }
             )
         }
@@ -212,6 +217,13 @@ fun HabitTrackerNavGraph() {
                         popUpTo(Routes.DASHBOARD)
                     }
                 }
+            )
+        }
+
+        // === AI GENERATOR ROUTE ===
+        composable(Routes.AI_GENERATOR) {
+            AiGeneratorScreen(
+                onNavigateUp = { navController.popBackStack() }
             )
         }
 

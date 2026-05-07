@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
@@ -36,6 +37,7 @@ import com.example.habittracker.presentation.DashboardViewModel
 import com.example.habittracker.presentation.TodoViewModel
 import com.example.habittracker.domain.model.TodoPriority
 import com.example.habittracker.domain.model.TodoCategory
+
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -50,6 +52,7 @@ fun DashboardScreen(
     onAnalytics: () -> Unit = {},
     onNavigateToTodos: () -> Unit = {},
     onProfile: () -> Unit = {},
+    onNavigateToAiGenerator: () -> Unit = {}, // New parameter for AI Generator
     viewModel: DashboardViewModel = hiltViewModel(),
     todoViewModel: TodoViewModel = hiltViewModel()
 ) {
@@ -171,6 +174,13 @@ fun DashboardScreen(
                         Icon(
                             Icons.Default.AccountCircle,
                             contentDescription = "Profile",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(onClick = onNavigateToAiGenerator) {
+                        Icon(
+                            Icons.Filled.AutoAwesome,
+                            contentDescription = "AI Routine Architect",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
