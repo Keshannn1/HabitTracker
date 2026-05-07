@@ -53,4 +53,5 @@ object AppModule {
     fun provideCategoryDao(database: AppDatabase): CategoryDao {
         return database.categoryDao()
     }
+
 }
