@@ -1,220 +1,138 @@
-## ISTN3MT Mobile–Cloud Implementation Project — HabitTracker
+ISTN3MT MOBILE–CLOUD IMPLEMENTATION PROJECT Project Title: HabitTracker Module: ISTN3MT
 
-**Module:** ISTN3MT  
-**Project type:** Mobile–Cloud polyglot application (Android + Cloud + Web APIs + AI)
+HabitTracker is a mobile productivity app designed to help users build better routines, stay on top of daily tasks, and track personal progress over time. The app combines local mobile storage with cloud services so that it can work smoothly on-device while still supporting account-based syncing and modern smart features.
 
-HabitTracker is an Android productivity app that combines **local offline storage (Room/SQLite)** with **cloud identity + sync (Firebase Authentication + Cloud Firestore)**. It supports **full CRUD (Create/Read/Update/Delete)** and enhances the user experience with **AI-generated routines (Gemini API)** and **location-based daily briefing (weather + quote + city name)**.
+In simple terms, this project is about bringing together mobile computing, cloud computing, and emerging technologies in one practical app.
 
----
+WHAT THE APP DOES (OVERVIEW)
+HabitTracker allows users to:
 
-## Key features (what the app does)
+Create and manage daily routines with timed tasks
+Manage a to-do list with priorities, due dates, and recurring tasks
+Write and organize personal notes
+Track progress and streak analytics
+Sign in securely and sync selected data with cloud services
+Use an AI assistant to generate routines from goals
+Receive a daily smart briefing using location + weather + quote APIs
+This gives the app both strong core functionality (CRUD and tracking) and innovation features (AI + context-aware content).
 
-### Core productivity features
-- **Routines & Timed Tasks**
-  - Create routines from scratch or from templates
-  - Run routines with a timer flow
-  - Track completion history used for analytics (streaks, total time, completions)
+CRUD REQUIREMENTS (READ, INSERT, EDIT, DELETE)
+The app fully supports CRUD operations. The easiest place to demonstrate this in class is the To-Do feature:
 
-- **To‑Do List (CRUD)**
-  - Add tasks with priority, category, due date, recurring intervals
-  - View active / overdue / completed lists
-  - Edit task details
-  - Delete tasks (with confirmation)
+CREATE (Insert data):
 
-- **Notes (CRUD)**
-  - Create and edit notes
-  - Pin notes
-  - Delete notes
-  - Categorize notes (custom categories)
+User taps + and adds a new to-do item
+Example for demo: Title = Ashley, Description = ashley@ukzn.ac.za
+READ (Read data):
 
-- **Analytics**
-  - Progress summary on dashboard (completed routines, total time, streaks)
-  - Dedicated analytics screen for deeper insights (where implemented)
+User views to-do lists (active/overdue/completed)
+Can filter by category and sort by priority/date
+UPDATE (Edit data):
 
-### Cloud & emerging technology features
-- **Authentication**
-  - Email/password sign‑in + sign‑up
-  - Google sign‑in (token-based)
-  - Password reset support
+User opens the Ashley item and edits details
+Example: change description/email to ashley.m@ukzn.ac.za
+DELETE (Delete data):
 
-- **Cloud Sync (Firestore)**
-  - Syncs user data such as **todos** and **routines/tasks** to Firestore per-user collections
-  - Uses snapshot listeners for near real-time updates when logged in
+User deletes the Ashley item
+Item is removed from the list
+CRUD is also present in routines and notes, but To-Do is the quickest for marking.
 
-- **Daily Briefing (Location + Web APIs)**
-  - Requests location permission and fetches:
-    - current weather (Open‑Meteo)
-    - city name (reverse geocoding)
-    - daily quote (ZenQuotes)
-  - Works with fallback coordinates if location is unavailable
+MOBILE SYSTEMS (HW + SW)
+MOBILE HARDWARE CONTEXT: The app runs on standard smartphone hardware, including:
 
-### Native AI feature
-- **AI Routine Architect (Gemini REST API)**
-  - User enters a goal (e.g., “ADHD Morning Focus”)
-  - App generates a routine (tasks + durations) using Gemini
-  - If AI/network fails, it falls back to local templates
-  - Generated routines can be saved to Room and used like any other routine
+SoC (CPU/GPU): handles app logic, UI rendering, and background tasks
+Memory (RAM): stores runtime state and app processes
+Storage (flash): stores local app database
+Sensors/services: location service is used for daily weather briefing
+User equipment: Android phone/tablet
+Transmission: Wi-Fi/mobile data for cloud and API communication
+MOBILE SOFTWARE CONTEXT:
 
----
+Android OS (Linux kernel based)
+App built in Kotlin
+Jetpack Compose + Material 3 for UI
+Coroutines and StateFlow for reactive behavior
+Hilt for dependency injection
+Room (SQLite) for local data persistence
+APPLICATION LAYER (UI, NETWORKING, DATA, SECURITY, CLOUD)
+UI Design & Components:
 
-## CRUD mapping (for marking)
+Built with Jetpack Compose and Material 3
+Includes auth, dashboard, to-do, notes, analytics, profile, and AI screens
+UI is reactive and updates automatically from ViewModel state
+Networking & API Integration:
 
-You can mark CRUD using the **To‑Do** feature (recommended because it is quick and clear):
+Uses Retrofit + OkHttp for HTTP communication
+Integrates weather, quote, reverse-geocoding, and AI services
+Data Persistence & Storage:
 
-- **Create:** Add a new To‑Do item from the `+` button  
-- **Read:** View To‑Do list (active / overdue / completed), filter by category, sort  
-- **Update:** Open a To‑Do item and edit title/description/priority/due date/recurrence  
-- **Delete:** Delete a To‑Do item (confirmation prompt)
+Local: Room + SQLite (offline-friendly structured storage)
+Cloud: Firebase Firestore (NoSQL real-time cloud storage)
+Security & Authentication:
 
-The app also demonstrates CRUD in **Notes** and **Routines**.
+Firebase Authentication
+Email/password login and Google sign-in
+Session-based access to user-specific cloud data
+HTTPS for secure transport
+Backend Services & Cloud Integration:
 
----
+Firebase services running on Google Cloud infrastructure
+Cloud Firestore used for synced user data
+Authentication and real-time data observation included
+NETWORKING & COMMUNICATION
+The app communicates over internet channels using mobile/Wi-Fi connectivity:
 
-## Live demo protocol (recommended flow)
+Short/medium/long range communication is handled by typical mobile network infrastructure
+API calls use secure HTTPS
+Firestore provides managed real-time sync behavior
+The app demonstrates practical mobile-to-cloud communication flow
+SECURITY
+Security in this project is addressed through:
 
-Use the marking protocol exactly with a To‑Do record:
+Authenticated user access (Firebase Auth)
+User-scoped cloud data organization
+Runtime permission handling for location
+Secure API communication over HTTPS
+Controlled app behavior when permissions are denied (fallback logic)
+EMERGING TECHNOLOGIES IN THIS PROJECT
+This project includes modern/emerging elements:
 
-### A) Create (Add New Record)
-1. Navigate to **To‑Do List**
-2. Tap **`+`**
-3. Create:
-   - **Title:** `Ashley`
-   - **Description:** `ashley@ukzn.ac.za`
-4. Save → confirm it appears in the list
+Generative AI feature (AI Routine Architect using Gemini API)
+Context-aware mobile feature (location-based daily briefing)
+Hybrid architecture (local SQL + cloud NoSQL)
+Real-time cloud observation (snapshot listeners)
+These features enhance user experience and demonstrate current industry trends beyond basic CRUD apps.
 
-### B) Read (View/Query Records)
-1. Show the list where records appear
-2. Demonstrate:
-   - overdue/today sections (if due dates used)
-   - category filter chips
-   - sorting options (priority, due date, created, category)
+CLOUD COMPONENTS (HW + SW VIEW)
+CLOUD HARDWARE VIEW (conceptual):
 
-### C) Update (Edit Record)
-1. Tap the Ashley item → open detail/edit screen
-2. Change description to: `ashley.m@ukzn.ac.za`
-3. Save → confirm the list updates immediately
+Uses distributed cloud infrastructure (clusters/nodes managed by provider)
+Scalable backend services without manually managing servers
+CLOUD SOFTWARE VIEW:
 
-### D) Delete (Remove Record)
-1. Delete Ashley (from detail screen)
-2. Confirm deletion
-3. Verify the record disappears
+Managed services: Firebase Authentication + Firestore
+API service layer for external data sources
+Mix of open-source libraries (Retrofit/Room) and proprietary cloud platforms (Firebase/Gemini endpoints)
+LIVE DEMO FLOW (MATCHING PRESENTATION PROTOCOL)
+Recommended demo sequence for marking:
 
-**Optional “wow factor” demo:**  
-Go to **AI Routine Architect** → generate a routine → save → show it appears on the dashboard.
+Sign in to show cloud-enabled session
+Go to To-Do and perform full CRUD:
+Create Ashley record
+Read/find the record
+Update email field
+Delete record
+Show one enhanced feature:
+AI routine generation OR Daily briefing card
+Briefly show dashboard analytics/progress
+Tip: narrate each step slowly and clearly while you perform it.
 
----
+PROJECT VALUE
+HabitTracker is not just a checklist app — it is a full mobile-cloud solution that demonstrates:
 
-## Architecture (Clean Architecture)
-
-The project follows Clean Architecture with clear separation:
-
-- **`data/`**: Room entities/DAOs, Firebase repositories, Retrofit services
-- **`domain/`**: models, repository interfaces, use cases
-- **`presentation/`**: ViewModels, UI state, business orchestration
-- **`ui/`**: Jetpack Compose screens and reusable components
-
-UI is reactive using **StateFlow** and Compose state collection.
-
----
-
-## Tech stack
-
-### Mobile (Android)
-- Kotlin
-- Jetpack Compose + Material 3
-- Navigation Compose
-- Coroutines + Flow
-- Hilt (Dependency Injection)
-
-### Local persistence
-- Room (SQLite)
-
-### Cloud
-- Firebase Authentication
-- Cloud Firestore (NoSQL)
-
-### Networking / APIs
-- Retrofit + OkHttp + Gson
-- Open‑Meteo (weather)
-- ZenQuotes (daily quote)
-- BigDataCloud reverse geocoding (city name)
-
-### AI
-- Gemini REST API (routine generation)
-
----
-
-## Permissions
-
-The app requests:
-- `INTERNET` (network calls, Firebase, APIs)
-- `ACCESS_COARSE_LOCATION` (Daily Briefing weather + city)
-
-If location is not granted, the briefing feature can fall back to default coordinates.
-
----
-
-## Setup & run (for GitHub users / lecturer)
-
-### Requirements
-- Android Studio (recent version)
-- Android SDK installed
-- Emulator or physical Android device (Android 7.0+ / minSdk 24)
-
-### Steps
-1. Clone the repository
-2. Open the project in Android Studio
-3. Sync Gradle
-4. Run the `app` configuration on an emulator/device
-
-### Firebase configuration (important)
-This project uses Firebase. If `app/google-services.json` is included in the repo, it should run as-is.
-If it is not included (or is removed for security), you must:
-1. Create a Firebase project
-2. Add an Android app with applicationId: `com.example.habittracker`
-3. Download `google-services.json`
-4. Place it in: `app/google-services.json`
-5. Enable:
-   - Authentication (Email/Password + Google)
-   - Firestore Database
-
----
-
-## Marking notes (how to verify cloud + sync)
-
-- Sign in → create/update/delete a To‑Do → it syncs to Firestore (per user).
-- Sign out → app stops cloud observation for that user.
-- When signed in again, Firestore snapshot listeners can repopulate local Room data.
-
----
-
-## Known limitations / notes
-- The app is designed to be demo-friendly: templates are seeded locally and AI generation includes a fallback mode for reliability.
-- Network-based features (AI + daily briefing) require an internet connection.
-- Location permission improves briefing accuracy, but the app can still demonstrate the feature with fallback coordinates.
-
----
-
-## Repository structure (high level)
-- `app/src/main/java/com/example/habittracker/`
-  - `data/` — Room + Firebase + Retrofit
-  - `domain/` — models + interfaces + use cases
-  - `presentation/` — ViewModels + UI state
-  - `ui/` — Compose screens (Auth, Dashboard, Todos, AI, etc.)
-
----
-
-## How to grade quickly (checklist)
-- [ ] App runs on device/emulator
-- [ ] User can sign up / sign in
-- [ ] CRUD demo completed (Create/Read/Update/Delete) using To‑Do
-- [ ] Cloud component visible (Firestore sync or auth)
-- [ ] AI feature shown (AI Routine Architect)
-- [ ] Emerging tech shown (Daily Briefing via location + web APIs)
-
----
-
-## Author
-Student No: 224177875
-Module: ISTN3MT  
-Institution: University of Kwa-Zulu Natal
+Clean architecture design
+Complete CRUD lifecycle
+Local + cloud data strategy
+Authentication and security
+Real API integration
+AI-assisted user experience
