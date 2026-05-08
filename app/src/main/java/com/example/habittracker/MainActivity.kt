@@ -16,7 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import android.util.Log
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -49,7 +48,7 @@ object Routes {
     const val ANALYTICS = "analytics"
     const val PROFILE = "profile"
     const val TEMPLATE_SELECTION = "template_selection"
-    const val LOADING = "loading"
+    // LOADING route removed — auth page is now the first screen
     const val TODO_LIST = "todo_list"
     const val TODO_DETAIL = "todo_detail/{todoId}"
     const val AI_GENERATOR = "ai_generator"
@@ -107,42 +106,30 @@ fun HabitTrackerNavGraph() {
     val dashboardViewModel: DashboardViewModel = hiltViewModel()
     val authState by authViewModel.authState.collectAsState()
 
-    // Use a flag to prevent overlapping navigation actions
     val lastNavRequest = remember { mutableStateOf<AuthState?>(null) }
 
     LaunchedEffect(authState) {
-        // Skip if already processing this exact state
         if (lastNavRequest.value === authState) return@LaunchedEffect
         lastNavRequest.value = authState
 
         val currentRoute = navController.currentDestination?.route
         when {
             authState is AuthState.Authenticated && currentRoute != Routes.DASHBOARD -> {
-                safeNavigate(navController, Routes.DASHBOARD, Routes.LOADING, true)
+                safeNavigate(navController, Routes.DASHBOARD, Routes.AUTH, true)
             }
             (authState is AuthState.Unauthenticated || authState is AuthState.Error) && currentRoute != Routes.AUTH -> {
-                safeNavigate(navController, Routes.AUTH, Routes.LOADING, true)
+                // Sign-out or error: go back to login page
+                safeNavigate(navController, Routes.AUTH, Routes.DASHBOARD, true)
             }
-            authState is AuthState.Loading && currentRoute != Routes.LOADING -> {
-                safeNavigate(navController, Routes.LOADING, Routes.DASHBOARD, true)
-            }
+            // Loading: stay on current screen — AuthScreen handles its own UI
         }
     }
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOADING,
+        startDestination = Routes.AUTH,
         modifier = Modifier.fillMaxSize()
     ) {
-        composable(Routes.LOADING) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-
         composable(Routes.AUTH) {
             AuthScreen(
                 viewModel = authViewModel
